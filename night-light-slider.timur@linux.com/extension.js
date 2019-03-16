@@ -1,5 +1,4 @@
 /* global imports log */
-const Lang = imports.lang
 const St = imports.gi.St
 const Gio = imports.gi.Gio
 const GLib = imports.gi.GLib
@@ -25,11 +24,9 @@ const ColorInterface = '<node> \
 </node>'
 /* eslint-enable */
 
-const NightLightSlider = new Lang.Class({
-  Name: 'NightLightSlider',
-  Extends: PanelMenu.SystemIndicator,
-  _init: function (schema, settings) {
-    this.parent('night-light-symbolic')
+class NightLightSlider extends PanelMenu.SystemIndicator {
+  constructor (schema, settings) {
+    super('night-light-symbolic')
     this._schema = schema
     this._min = settings.minimum
     this._max = settings.maximum
@@ -58,43 +55,47 @@ const NightLightSlider = new Lang.Class({
 
     // Update initial view
     this._updateView()
-  },
-  _proxyHandler: function (proxy, error) {
+  }
+
+  _proxyHandler (proxy, error) {
     if (error) {
       log(error.message)
       return
     }
     this.proxy.connect('g-properties-changed', this.update_view.bind(this))
-  },
-  _sliderChanged: function (slider, value) {
+  }
+
+  _sliderChanged (slider, value) {
     const temperature = parseInt(value * (this._max - this._min)) + this._min
     this._schema.set_uint('night-light-temperature', temperature)
 
     this._listeners.forEach(callback => {
       callback(temperature, value)
     })
-  },
-  _onSliderChanged: function (callback) {
+  }
+
+  _onSliderChanged (callback) {
     this._listeners.push(callback)
-  },
-  _updateView: function () {
+  }
+
+  _updateView () {
     // Update temperature view
     const temperature = this._schema.get_uint('night-light-temperature')
     const value = (temperature - this._min) / (this._max - this._min)
     this._slider.setValue(value)
-  },
-  _scroll: function (event) {
+  }
+  _scroll (event) {
     this._slider.scroll(event)
   }
-})
+}
 
-const NightLightSchedule = new Lang.Class({
-  Name: 'NightLightSchedule',
-  _init: function (schema) {
+class NightLightSchedule {
+  constructor (schema) {
     this._schema = schema
     this._enabled = false
-  },
-  _updateSchedule: function () {
+  }
+
+  _updateSchedule () {
     if (!this._enabled) {
       return false
     }
@@ -109,8 +110,9 @@ const NightLightSchedule = new Lang.Class({
     this._schema.set_double('night-light-schedule-to', to)
     this._schema.set_double('night-light-schedule-from', from)
     return true
-  },
-  _enableLoop: function () {
+  }
+
+  _enableLoop () {
     this._enabled = true
     // Get original values to reset to
     this._to = this._schema.get_double('night-light-schedule-to')
@@ -120,19 +122,18 @@ const NightLightSchedule = new Lang.Class({
     // Start loop
     this.loopId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000 * 60 * 60, this._updateSchedule.bind(this))
     this._updateSchedule()
-  },
-  _disableLoop: function () {
+  }
+  _disableLoop () {
     if (this._enabled) {
       this._schema.set_double('night-light-schedule-to', this._to)
       this._schema.set_double('night-light-schedule-from', this._from)
       this._schema.set_boolean('night-light-schedule-automatic', this._auto)
     }
   }
-})
+}
 
-const NightLightExtension = new Lang.Class({
-  Name: 'NightLightExtension',
-  _init: function () {
+class NightLightExtension {
+  constructor () {
     this._schema = new Gio.Settings({ schema: COLOR_SCHEMA })
     this._colorProxy = Gio.DBusProxy.makeProxyWrapper(ColorInterface)
     this._scheduleUpdater = new NightLightSchedule(this._schema)
@@ -144,8 +145,9 @@ const NightLightExtension = new Lang.Class({
     this._indicators = null
     this._construct = () => new Error('[night-light-slider] View construct stub not set up!')
     this._deconstruct = () => new Error('[night-light-slider] View deconstruct stub not set up!')
-  },
-  enable: function () {
+  }
+
+  enable () {
     // Settings
     const settings = Convenience.getSettings()
 
@@ -223,8 +225,9 @@ const NightLightExtension = new Lang.Class({
         Main.panel.statusArea.aggregateMenu._brightness._slider.emit('value-changed', value)
       }
     })
-  },
-  disable: function () {
+  }
+
+  disable () {
     // Run deconstruct function
     this._deconstruct()
 
@@ -238,7 +241,7 @@ const NightLightExtension = new Lang.Class({
     // Disable updater loop
     this._scheduleUpdater._disableLoop()
   }
-})
+}
 
 function init () { // eslint-disable-line
   return new NightLightExtension()
