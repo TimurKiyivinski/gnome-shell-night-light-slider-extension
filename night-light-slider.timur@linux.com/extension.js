@@ -84,6 +84,7 @@ class NightLightSlider extends PanelMenu.SystemIndicator {
     const value = (temperature - this._min) / (this._max - this._min)
     this._slider.setValue(value)
   }
+
   _scroll (event) {
     this._slider.scroll(event)
   }
@@ -123,6 +124,7 @@ class NightLightSchedule {
     this.loopId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000 * 60 * 60, this._updateSchedule.bind(this))
     this._updateSchedule()
   }
+
   _disableLoop () {
     if (this._enabled) {
       this._schema.set_double('night-light-schedule-to', this._to)
