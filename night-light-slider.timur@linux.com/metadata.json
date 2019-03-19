@@ -6,8 +6,7 @@
     "version": 10,
     "url": "https://github.com/TimurKiyivinski/gnome-shell-night-light-slider-extension",
     "shell-version": [
-        "3.24",
-        "3.26",
-        "3.28"
+	"3.31",
+        "3.32"
     ]
 }
