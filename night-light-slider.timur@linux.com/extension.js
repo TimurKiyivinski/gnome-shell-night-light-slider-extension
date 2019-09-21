@@ -43,7 +43,7 @@ class NightLightSlider extends PanelMenu.SystemIndicator {
 
     // Slider
     this._slider = new Slider.Slider(0)
-    this._slider.connect('value-changed', this._sliderChanged.bind(this))
+    this._slider.connect('notify::value', this._sliderChanged.bind(this))
     this._slider.actor.accessible_name = 'Temperature'
     this._item.actor.add(this._slider.actor, { expand: true })
 
@@ -65,12 +65,12 @@ class NightLightSlider extends PanelMenu.SystemIndicator {
     this.proxy.connect('g-properties-changed', this.update_view.bind(this))
   }
 
-  _sliderChanged (slider, value) {
-    const temperature = parseInt(value * (this._max - this._min)) + this._min
+  _sliderChanged (slider, event) {
+    const temperature = parseInt(this._slider.value * (this._max - this._min)) + this._min
     this._schema.set_uint('night-light-temperature', temperature)
 
     this._listeners.forEach(callback => {
-      callback(temperature, value)
+      callback(temperature, this._slider.value)
     })
   }
 
@@ -82,7 +82,7 @@ class NightLightSlider extends PanelMenu.SystemIndicator {
     // Update temperature view
     const temperature = this._schema.get_uint('night-light-temperature')
     const value = (temperature - this._min) / (this._max - this._min)
-    this._slider.setValue(value)
+    this._slider.value = value
   }
 
   _scroll (event) {
