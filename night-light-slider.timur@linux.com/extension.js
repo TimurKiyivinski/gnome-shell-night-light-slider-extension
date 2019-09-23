@@ -65,7 +65,7 @@ class NightLightSlider extends PanelMenu.SystemIndicator {
     this.proxy.connect('g-properties-changed', this.update_view.bind(this))
   }
 
-  _sliderChanged (slider, event) {
+  _sliderChanged (slider) {
     const temperature = parseInt(this._slider.value * (this._max - this._min)) + this._min
     this._schema.set_uint('night-light-temperature', temperature)
 
@@ -224,7 +224,7 @@ class NightLightExtension {
     this._indicator._onSliderChanged((temperature, value) => {
       // Set up night light to sync with brightness if changed
       if (settings.get_boolean('brightness-sync')) {
-        Main.panel.statusArea.aggregateMenu._brightness._slider.emit('value-changed', value)
+        Main.panel.statusArea.aggregateMenu._brightness._slider.value = value
       }
     })
   }
