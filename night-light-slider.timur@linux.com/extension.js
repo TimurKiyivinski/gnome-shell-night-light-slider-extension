@@ -18,7 +18,7 @@ const COLOR_SCHEMA = 'org.gnome.settings-daemon.plugins.color'
 /* eslint-disable */
 const ColorInterface = '<node> \
 <interface name="org.gnome.SettingsDaemon.Color"> \
-  <property name="Temperature" type="u" access="readwrite"/> \
+  <property name="Temperature" type="d" access="readwrite"/> \
   <property name="NightLightActive" type="b" access="read"/> \
 </interface> \
 </node>'
