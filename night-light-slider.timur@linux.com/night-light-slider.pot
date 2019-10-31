@@ -1,0 +1,72 @@
+# gnome-shell-night-light-slider translation file
+# Copyright (C) 2019
+# This file is distributed under the GPLv2+
+# Timur Kiyui <timur@linux.com>, 2017-2019.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2019-01-09 23:37+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: \n"
+
+#: lang.js:9
+msgid "Show always"
+msgstr ""
+
+#: lang.js:10
+msgid "Show slider even when night light is off"
+msgstr ""
+
+#: lang.js:13
+msgid "Show status icon"
+msgstr ""
+
+#: lang.js:14
+msgid "Show status icon in status area"
+msgstr ""
+
+#: lang.js:17
+msgid "Enable always"
+msgstr ""
+
+#: lang.js:18
+msgid "Enable night light throughout the day"
+msgstr ""
+
+#: lang.js:21
+msgid "Brightness sync"
+msgstr ""
+
+#: lang.js:22
+msgid "Sync brightness slider with night light slider"
+msgstr ""
+
+#: lang.js:25
+msgid "Show in submenu"
+msgstr ""
+
+#: lang.js:26
+msgid "Display slider in night light submenu"
+msgstr ""
+
+#: lang.js:29
+msgid "Minimum value"
+msgstr ""
+
+#: lang.js:30
+msgid "Minimum night light slider value"
+msgstr ""
+
+#: lang.js:33
+msgid "Maximum value"
+msgstr ""
+
+#: lang.js:34
+msgid "Maximum night light slider value"
+msgstr ""
+
+#: lang.js:37
+msgid "Changes require restarting shell (logging in and out) to take place."
+msgstr ""

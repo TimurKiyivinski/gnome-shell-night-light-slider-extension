@@ -1,8 +1,9 @@
+/* eslint-disable no-unused-vars */
 /* global imports log */
 const Gio = imports.gi.Gio
 const Me = imports.misc.extensionUtils.getCurrentExtension()
 
-function getSettings () { // eslint-disable-line no-unused-vars
+function getSettings () {
   const schema = Me.metadata['settings-schema']
   const schemaDir = Me.dir.get_child('schemas')
 
