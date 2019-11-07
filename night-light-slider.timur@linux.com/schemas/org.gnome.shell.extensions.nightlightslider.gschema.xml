@@ -16,12 +16,12 @@
             <description>Enable night light throughout the day</description>
         </key>
         <key name="minimum" type="i">
-            <default>2500</default>
+            <default>1500</default>
             <summary>Minimum value</summary>
             <description>Minimum night light slider value</description>
         </key>
         <key name="maximum" type="i">
-            <default>6500</default>
+            <default>5000</default>
             <summary>Maximum value</summary>
             <description>Maximum night light slider value</description>
         </key>
