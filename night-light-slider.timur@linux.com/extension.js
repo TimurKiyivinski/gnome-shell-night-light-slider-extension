@@ -161,9 +161,7 @@ class NightLightExtension {
 
     // Night light icon
     this._icon = Main.panel.statusArea.aggregateMenu._nightLight;
-    // This will be defined if icon is set to hide
     this._indicator = null;
-    this._indicators = null;
     this._construct = () =>
       new Error("[night-light-slider] View construct stub not set up!");
     this._deconstruct = () =>
@@ -213,9 +211,12 @@ class NightLightExtension {
     // Hide status icon if set to disable
     if (!settings.get_boolean("show-status-icon") && this._icon) {
       log(`[night-light-slider] Hiding status icon`);
-      this._indicators = this._icon.indicators;
-      this._icon.indicators.hide();
-      this._icon.indicators = new St.BoxLayout();
+      this._icon.hide();
+
+      // TODO: Rewrite the extension
+      this._hackyShowCallback = this._icon.connect("show", () => {
+        this._icon.hide();
+      });
     }
 
     // When scrolling the indicator, change night light intensity
@@ -261,15 +262,14 @@ class NightLightExtension {
   }
 
   disable() {
+    // TODO: Figure out the proper way to disconnect signals
+    if (this._hackyShowCallback) {
+      this._icon.disconnect(this._hackyShowCallback);
+      this._icon.show();
+    }
+
     // Run deconstruct function
     this._deconstruct();
-
-    // Restore default status icon behaviour
-    if (this._indicators) {
-      Main.panel.statusArea.aggregateMenu._nightLight.indicators.destroy();
-      Main.panel.statusArea.aggregateMenu._nightLight.indicators = this._indicators;
-      Main.panel.statusArea.aggregateMenu._nightLight.indicators.show();
-    }
 
     // Disable updater loop
     this._scheduleUpdater._disableLoop();
