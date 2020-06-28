@@ -47,20 +47,20 @@ const NightLightSlider = GObject.registerClass(
           icon_name: "night-light-symbolic",
           style_class: "popup-menu-icon",
         });
-        this._item.actor.add(this._icon);
+        this._item.add(this._icon);
       }
 
       // Slider
       this._slider = new Slider.Slider(0);
       this._slider.connect("notify::value", this._sliderChanged.bind(this));
-      this._slider.actor.accessible_name = "Temperature";
-      this._item.actor.add(this._slider.actor, { expand: true });
+      this._slider.accessible_name = "Temperature";
+      this._item.add(this._slider, { expand: true });
 
       // Connect events
-      this._item.actor.connect("button-press-event", (actor, event) =>
+      this._item.connect("button-press-event", (o, event) =>
         this._slider.startDragging(event)
       );
-      this._item.actor.connect("key-press-event", (actor, event) =>
+      this._item.connect("key-press-event", (o, event) =>
         this._slider.onKeyPressEvent(actor, event)
       );
 
@@ -219,7 +219,7 @@ class NightLightExtension {
     }
 
     // When scrolling the indicator, change night light intensity
-    this._icon.indicators.connect("scroll-event", (actor, event) => {
+    this._icon.connect("scroll-event", (o, event) => {
       this._indicator._scroll(event);
       return true;
     });
