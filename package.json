@@ -2,8 +2,6 @@
   "name": "gnome-shell-night-light-slider-extension",
   "description": "Change night light temperature",
   "scripts": {
-    "lint": "standard",
-    "lint:fix": "standard --fix",
     "build:schema": "glib-compile-schemas night-light-slider.timur@linux.com/schemas/",
     "build:copy": "cp -rvf night-light-slider.timur@linux.com/ ~/.local/share/gnome-shell/extensions/",
     "build:zip": "cd night-light-slider.timur@linux.com/ && zip -r ../night-light-slider.timur@linux.com.zip ./*",
@@ -27,13 +25,17 @@
   },
   "homepage": "https://github.com/kiyui/gnome-shell-night-light-slider-extension#readme",
   "devDependencies": {
-    "pre-commit": "^1.2.2",
-    "standard": "^12.0.1"
+    "husky": ">=4",
+    "lint-staged": ">=10",
+    "prettier": "^2.0.5"
   },
-  "standard": {
-    "env": "jest"
+  "dependencies": {},
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   },
-  "pre-commit": [
-    "lint:fix"
-  ]
+  "lint-staged": {
+    "*.{js,css,md}": "prettier --write"
+  }
 }
