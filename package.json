@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TimurKiyivinski/gnome-shell-night-light-slider-extension.git"
+    "url": "git+https://github.com/kiyui/gnome-shell-night-light-slider-extension.git"
   },
   "keywords": [
     "gnome",
@@ -20,12 +20,12 @@
     "light",
     "extension"
   ],
-  "author": "Timur Kiyui",
+  "author": "Dafne Kiyui",
   "license": "GPL-2.0",
   "bugs": {
-    "url": "https://github.com/TimurKiyivinski/gnome-shell-night-light-slider-extension/issues"
+    "url": "https://github.com/kiyui/gnome-shell-night-light-slider-extension/issues"
   },
-  "homepage": "https://github.com/TimurKiyivinski/gnome-shell-night-light-slider-extension#readme",
+  "homepage": "https://github.com/kiyui/gnome-shell-night-light-slider-extension#readme",
   "devDependencies": {
     "pre-commit": "^1.2.2",
     "standard": "^12.0.1"
