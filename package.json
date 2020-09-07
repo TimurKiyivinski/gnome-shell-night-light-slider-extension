@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/kiyui/gnome-shell-night-light-slider-extension#readme",
   "devDependencies": {
+    "eslint": "^7.8.1",
     "husky": ">=4",
     "lint-staged": ">=10"
   },
@@ -35,6 +36,6 @@
     }
   },
   "lint-staged": {
-    "*.{js,css,md}": "exit 1"
+    "*.js": "eslint --fix"
   }
 }
