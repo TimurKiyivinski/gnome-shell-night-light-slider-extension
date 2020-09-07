@@ -26,8 +26,7 @@
   "homepage": "https://github.com/kiyui/gnome-shell-night-light-slider-extension#readme",
   "devDependencies": {
     "husky": ">=4",
-    "lint-staged": ">=10",
-    "prettier": "^2.0.5"
+    "lint-staged": ">=10"
   },
   "dependencies": {},
   "husky": {
@@ -36,6 +35,6 @@
     }
   },
   "lint-staged": {
-    "*.{js,css,md}": "prettier --write"
+    "*.{js,css,md}": "exit 1"
   }
 }
