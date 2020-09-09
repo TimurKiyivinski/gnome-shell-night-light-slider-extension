@@ -8,7 +8,7 @@
         <key name="show-status-icon" type="b">
             <default>true</default>
             <summary>Show indicator</summary>
-            <description>Show the night light indicator in the status area</description>
+            <description>Show the night light indicator in the status area when night light is enabled</description>
         </key>
         <key name="enable-always" type="b">
             <default>false</default>

@@ -1,282 +1,288 @@
-/* global imports log */
-const St = imports.gi.St;
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const Main = imports.ui.main;
-const Slider = imports.ui.slider;
+// -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
+/* exported Indicator init */
+
+const {Gio, GLib, GObject, St} = imports.gi;
+
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
-const GObject = imports.gi.GObject;
+const Slider = imports.ui.slider;
 
-// Globals
-const INDEX = 2;
-const BUS_NAME = "org.gnome.SettingsDaemon.Color";
-const OBJECT_PATH = "/org/gnome/SettingsDaemon/Color";
-const COLOR_SCHEMA = "org.gnome.settings-daemon.plugins.color";
+// Get running panel instance
+const {panel} = imports.ui.main;
 
-/* eslint-disable */
-const ColorInterface =
-  '<node> \
-<interface name="org.gnome.SettingsDaemon.Color"> \
-  <property name="Temperature" type="d" access="readwrite"/> \
-  <property name="NightLightActive" type="b" access="read"/> \
-</interface> \
-</node>';
-/* eslint-enable */
+const ExtensionUtils = imports.misc.extensionUtils;
 
-const NightLightSlider = GObject.registerClass(
-  {
-    GType: "NightLightSlider",
-  },
-  class NightLightSlider extends PanelMenu.SystemIndicator {
-    _init(schema, settings) {
-      super._init("night-light-symbolic");
-      this._schema = schema;
-      this._min = settings.minimum;
-      this._max = settings.maximum;
-      this._listeners = [];
+const Me = ExtensionUtils.getCurrentExtension();
+const {debounce, setInterval} = Me.imports.convenience;
 
-      // Set up view
-      this._item = new PopupMenu.PopupBaseMenuItem({ activate: false });
-      this.menu.addMenuItem(this._item);
+// GSettings schema
+const COLOR_SCHEMA = 'org.gnome.settings-daemon.plugins.color';
 
-      if (settings.enable_icon) {
-        this._icon = new St.Icon({
-          icon_name: "night-light-symbolic",
-          style_class: "popup-menu-icon",
+// D-Bus
+const BUS_NAME = 'org.gnome.SettingsDaemon.Color';
+const OBJECT_PATH = '/org/gnome/SettingsDaemon/Color';
+
+const ColorInterface = `<node>
+  <interface name="org.gnome.SettingsDaemon.Color">
+    <property name="NightLightActive" type="b" access="read"/>
+    <property name="Temperature" type="d" access="read"/>
+  </interface>
+</node>`;
+const ColorProxy = Gio.DBusProxy.makeProxyWrapper(ColorInterface);
+
+// Brightness D-Bus
+const {loadInterfaceXML} = imports.misc.fileUtils;
+
+const BRIGHTNESS_BUS_NAME = 'org.gnome.SettingsDaemon.Power';
+const BRIGHTNESS_OBJECT_PATH = '/org/gnome/SettingsDaemon/Power';
+
+const BrightnessInterface = loadInterfaceXML('org.gnome.SettingsDaemon.Power.Screen');
+const BrightnessProxy = Gio.DBusProxy.makeProxyWrapper(BrightnessInterface);
+
+var Indicator = GObject.registerClass(
+class Indicator extends PanelMenu.SystemIndicator {
+    _init(indicator, options) {
+        super._init();
+
+        // Decorate _sync method
+        this._sync = debounce(this.__sync.bind(this), 500);
+
+        // Hijacked indicator instance
+        this._indicator = indicator;
+
+        // Indicator options
+        this._options = options;
+
+        // Night Light GSettings
+        this._settings = new Gio.Settings({schema_id: COLOR_SCHEMA});
+
+        // Night Light D-Bus
+        this._proxy = new ColorProxy(Gio.DBus.session, BUS_NAME, OBJECT_PATH,
+            (proxy, error) => {
+                if (error) {
+                    log(`ColorProxy: ${error.message}`);
+                    return;
+                }
+                this._proxyChangedId = this._proxy.connect('g-properties-changed',
+                    this._sync.bind(this));
+                this._sync();
+            });
+
+
+        // Write-only Brightness D-Bus
+        this._brightnessProxy = new BrightnessProxy(Gio.DBus.session, BRIGHTNESS_BUS_NAME, BRIGHTNESS_OBJECT_PATH,
+            (proxy, error) => {
+                if (error)
+                    log(`BrightnessProxy: ${error.message}`);
+            });
+
+        // We create our slider for the Panel AggregateMenu
+        this._item = new PopupMenu.PopupBaseMenuItem({activate: false});
+        this.menu.addMenuItem(this._item);
+
+        // Create the slider
+        this._slider = new Slider.Slider(0);
+        this._sliderChangedId = this._slider.connect('notify::value',
+            this._sliderChanged.bind(this));
+        this._slider.accessible_name = _('Night Light Temperature');
+
+        this._slider_icon = new St.Icon({icon_name: 'night-light-symbolic',
+            style_class: 'popup-menu-icon'});
+
+        // Add the slider & its icon to the base menu
+        this._item.add(this._slider_icon);
+        this._item.add_child(this._slider);
+
+        // Connect menu signals to the slider
+        this._item.connect('button-press-event', (actor, event) => {
+            return this._slider.startDragging(event);
         });
-        this._item.add(this._icon);
-      }
+        this._item.connect('key-press-event', (actor, event) => {
+            return this._slider.emit('key-press-event', event);
+        });
+        this._item.connect('scroll-event', (actor, event) => {
+            return this._slider.emit('scroll-event', event);
+        });
 
-      // Slider
-      this._slider = new Slider.Slider(0);
-      this._slider.connect("notify::value", this._sliderChanged.bind(this));
-      this._slider.accessible_name = "Temperature";
-      this._item.add(this._slider, { expand: true });
-
-      // Connect events
-      this._item.connect("button-press-event", (o, event) =>
-        this._slider.startDragging(event)
-      );
-      this._item.connect("key-press-event", (o, event) =>
-        this._slider.onKeyPressEvent(actor, event)
-      );
-
-      // Update initial view
-      this._updateView();
+        // Connect indicator signals to the slider
+        this._indicatorShowId = this._indicator.connect('show', () => {
+            this._updateIndicatorVisibility();
+        });
+        this._indicatorScrollId = this._indicator.connect('scroll-event', (actor, event) => {
+            return this._slider.emit('scroll-event', event);
+        });
     }
 
-    _proxyHandler(proxy, error) {
-      if (error) {
-        log(error.message);
-        return;
-      }
-      this.proxy.connect("g-properties-changed", this.update_view.bind(this));
+    _sliderChanged() {
+        const {swapAxis, minimum, maximum, brightnessSync} = this._options;
+        const percent = swapAxis
+            ? 1 - this._slider.value
+            : this._slider.value;
+        const temperature = percent * (maximum - minimum) + minimum;
+        this._settings.set_uint('night-light-temperature', temperature);
+
+        if (brightnessSync && this._brightnessProxy.Brightness >= 0)
+            this._brightnessProxy.Brightness = this._slider.value * 100;
     }
 
-    _sliderChanged(slider) {
-      const temperature =
-        parseInt(this._slider.value * (this._max - this._min)) + this._min;
-      this._schema.set_uint("night-light-temperature", temperature);
-
-      this._listeners.forEach((callback) => {
-        callback(temperature, this._slider.value);
-      });
+    _changeSlider(value) {
+        this._slider.block_signal_handler(this._sliderChangedId);
+        this._slider.value = value;
+        this._slider.unblock_signal_handler(this._sliderChangedId);
     }
 
-    _onSliderChanged(callback) {
-      this._listeners.push(callback);
+    _updateIndicatorVisibility() {
+        this._indicator.visible = this._indicator_visibility;
     }
 
-    _updateView() {
-      // Update temperature view
-      const temperature = this._schema.get_uint("night-light-temperature");
-      const value = (temperature - this._min) / (this._max - this._min);
-      this._slider.value = value;
+    __sync() {
+        const {showAlways, showStatusIcon, swapAxis, minimum, maximum} = this._options;
+        const active = this._proxy.NightLightActive;
+        this._item.visible = active || showAlways;
+        this._indicator_visibility = active && showStatusIcon;
+        this._updateIndicatorVisibility();
+
+        if (active) {
+            const percent = (this._proxy.Temperature - minimum) / (maximum - minimum);
+            if (swapAxis)
+                this._changeSlider(1 - percent);
+            else
+                this._changeSlider(percent);
+        }
     }
 
-    _scroll(event) {
-      this._slider.scroll(event);
+    updateOption(option, value) {
+        this._options[option] = value;
+        switch (option) {
+        case 'showAlways':
+            return this._sync();
+        case 'showStatusIcon':
+            return this._updateIndicatorVisibility();
+        }
     }
-  }
-);
+
+    destroy() {
+        this._indicator.disconnect(this._indicatorShowId);
+        this._indicator.disconnect(this._indicatorScrollId);
+        this._item.destroy();
+        super.destroy();
+    }
+});
 
 class NightLightSchedule {
-  constructor(schema) {
-    this._schema = schema;
-    this._enabled = false;
-  }
-
-  _updateSchedule() {
-    if (!this._enabled) {
-      return false;
+    constructor(settings) {
+        this._settings = settings;
     }
-    const date = new Date();
-    const hours = date.getHours();
-    date.setHours(hours - 6);
-    const from = date.getHours();
-    date.setHours(hours + 6);
-    const to = date.getHours();
-    log(
-      `[night-light-slider] Setting night light schedule from ${from} to ${to}`
-    );
-    this._schema.set_boolean("night-light-schedule-automatic", false);
-    this._schema.set_double("night-light-schedule-to", to);
-    this._schema.set_double("night-light-schedule-from", from);
-    return true;
-  }
 
-  _enableLoop() {
-    this._enabled = true;
-    // Get original values to reset to
-    this._to = this._schema.get_double("night-light-schedule-to");
-    this._from = this._schema.get_double("night-light-schedule-from");
-    this._auto = this._schema.get_boolean("night-light-schedule-automatic");
-
-    // Start loop
-    this.loopId = GLib.timeout_add(
-      GLib.PRIORITY_DEFAULT,
-      1000 * 60 * 60,
-      this._updateSchedule.bind(this)
-    );
-    this._updateSchedule();
-  }
-
-  _disableLoop() {
-    if (this._enabled) {
-      this._schema.set_double("night-light-schedule-to", this._to);
-      this._schema.set_double("night-light-schedule-from", this._from);
-      this._schema.set_boolean("night-light-schedule-automatic", this._auto);
+    enableTimer() {
+        this._settings.set_boolean('night-light-schedule-automatic', false);
+        // Update schedule every 1 hour
+        this._timerId = setInterval(this._updateSchedule.bind(this), 60 * 60 * 1000);
+        this._updateSchedule();
     }
-  }
+
+    disableTimer() {
+        if (this._timerId) {
+            this._settings.set_boolean('night-light-schedule-automatic', true);
+            GLib.Source.remove(this._timerId);
+            this._timerId = null;
+        }
+    }
+
+    _updateSchedule() {
+        const now = Date.now();
+        // Set a schedule span of 6 hours to & from now
+        const to = new Date(now + 6 * 60 * 60 * 1000);
+        const from = new Date(now - 6 * 60 * 60 * 1000);
+        this._settings.set_double('night-light-schedule-to', to.getHours());
+        this._settings.set_double('night-light-schedule-from', from.getHours());
+    }
 }
 
-class NightLightExtension {
-  constructor() {
-    this._schema = new Gio.Settings({ schema: COLOR_SCHEMA });
-    this._colorProxy = Gio.DBusProxy.makeProxyWrapper(ColorInterface);
-    this._scheduleUpdater = new NightLightSchedule(this._schema);
+class Extension {
+    constructor() {
+        this._settings = new Gio.Settings({schema_id: COLOR_SCHEMA});
+        this._scheduler = new NightLightSchedule(this._settings);
+        this._preferences = ExtensionUtils.getSettings();
 
-    // Night light icon
-    this._icon = Main.panel.statusArea.aggregateMenu._nightLight;
-    this._indicator = null;
-    this._construct = () =>
-      new Error("[night-light-slider] View construct stub not set up!");
-    this._deconstruct = () =>
-      new Error("[night-light-slider] View deconstruct stub not set up!");
-  }
+        // We set up listeners for GSettings last because:
+        // > Note that @settings only emits this signal if you have read key at
+        // > least once while a signal handler was already connected for key.
+        this._preferences.connect('changed::minimum', () =>
+            this._updateOption('minimum', this._preferences.get_int('minimum')));
+        this._preferences.connect('changed::maximum', () =>
+            this._updateOption('maximum', this._preferences.get_int('maximum')));
+        this._preferences.connect('changed::swap-axis', () =>
+            this._updateOption('swapAxis', this._preferences.get_boolean('swap-axis')));
+        this._preferences.connect('changed::show-always', () =>
+            this._updateOption('showAlways', this._preferences.get_boolean('show-always')));
+        this._preferences.connect('changed::show-status-icon', () =>
+            this._updateOption('showStatusIcon', this._preferences.get_boolean('show-status-icon')));
+        this._preferences.connect('changed::brightness-sync', () =>
+            this._updateOption('brightnessSync', this._preferences.get_boolean('brightness-sync')));
 
-  enable() {
-    // Settings
-    const settings = Convenience.getSettings();
+        // Set up hook to recreate indicator on settings change
+        this._preferences.connect('changed::show-in-submenu', () => {
+            if (!this._nightLight)
+                return;
+            this._nightLight.destroy();
+            this._create();
+        });
 
-    // Enable night light, otherwise why use this extension :D?
-    this._schema.set_boolean("night-light-enabled", true);
-
-    // Create and add widget
-    this._indicator = new NightLightSlider(this._schema, {
-      minimum: settings.get_int("minimum"),
-      maximum: settings.get_int("maximum"),
-      enable_icon: !settings.get_boolean("show-in-submenu"),
-    });
-
-    // Set up display construction stubs
-    if (settings.get_boolean("show-in-submenu")) {
-      this._construct = () => {
-        Main.panel.statusArea.aggregateMenu._nightLight.menu
-          ._getMenuItems()[0]
-          .menu.addMenuItem(this._indicator.menu);
-      };
-    } else {
-      this._construct = () => {
-        Main.panel.statusArea.aggregateMenu.menu.addMenuItem(
-          this._indicator.menu,
-          INDEX
-        );
-      };
+        // Set up hook to update scheduler
+        this._preferences.connect('changed::enable-always', () => {
+            if (!this._nightLight)
+                return;
+            this._setupScheduler();
+        });
     }
 
-    this._deconstruct = () => this._indicator.menu.destroy();
-
-    // Run construct function
-    this._construct();
-
-    // Set up updater loop to set night light schedule if update always is enabled
-    if (settings.get_boolean("enable-always")) {
-      this._scheduleUpdater._enableLoop();
+    _setupScheduler() {
+        if (this._preferences.get_boolean('enable-always'))
+            this._scheduler.enableTimer();
+        else
+            this._scheduler.disableTimer();
     }
 
-    // Hide status icon if set to disable
-    if (!settings.get_boolean("show-status-icon") && this._icon) {
-      log(`[night-light-slider] Hiding status icon`);
-      this._icon.hide();
+    _create() {
+        const indicator = panel.statusArea.aggregateMenu._nightLight;
+        this._nightLight = new Indicator(indicator, {
+            minimum: this._preferences.get_int('minimum'),
+            maximum: this._preferences.get_int('maximum'),
+            swapAxis: this._preferences.get_boolean('swap-axis'),
+            showAlways: this._preferences.get_boolean('show-always'),
+            showStatusIcon: this._preferences.get_boolean('show-status-icon'),
+            brightnessSync: this._preferences.get_boolean('brightness-sync'),
+        });
 
-      // TODO: Rewrite the extension
-      this._hackyShowCallback = this._icon.connect("show", () => {
-        this._icon.hide();
-      });
+        // Assign slider to AggregateMenu, just like other indicators
+        // This also makes it easier to debug the extension
+        panel.statusArea.aggregateMenu._nightLightSlider = this._nightLight;
+
+        if (this._preferences.get_boolean('show-in-submenu'))
+            panel.statusArea.aggregateMenu._nightLight._item.menu.addMenuItem(this._nightLight.menu);
+        else
+            panel.statusArea.aggregateMenu.menu.addMenuItem(this._nightLight.menu, 2);
     }
 
-    // When scrolling the indicator, change night light intensity
-    this._icon.connect("scroll-event", (o, event) => {
-      this._indicator._scroll(event);
-      return true;
-    });
-
-    // Set up proxy to update slider view
-    this._colorProxy(
-      Gio.DBus.session,
-      BUS_NAME,
-      OBJECT_PATH,
-      (proxy, error) => {
-        if (error) {
-          log(error.message);
-          return;
-        }
-
-        const updateView = () => {
-          this._indicator._updateView();
-          if (!settings.get_boolean("show-always")) {
-            const active = proxy.NightLightActive;
-            const menuItems = Main.panel.statusArea.aggregateMenu.menu._getMenuItems();
-            menuItems[INDEX].actor.visible = active;
-          }
-        };
-
-        proxy.connect("g-properties-changed", updateView);
-
-        // Update view once on init
-        updateView();
-      }
-    );
-
-    // Event hooks
-    this._indicator._onSliderChanged((temperature, value) => {
-      // Set up night light to sync with brightness if changed
-      if (settings.get_boolean("brightness-sync")) {
-        Main.panel.statusArea.aggregateMenu._brightness._slider.value = value;
-      }
-    });
-  }
-
-  disable() {
-    // TODO: Figure out the proper way to disconnect signals
-    if (this._hackyShowCallback) {
-      this._icon.disconnect(this._hackyShowCallback);
-      this._icon.show();
+    _updateOption(key, value) {
+        if (!this._nightLight)
+            return;
+        this._nightLight.updateOption(key, value);
     }
 
-    // Run deconstruct function
-    this._deconstruct();
+    enable() {
+        this._create();
+        this._setupScheduler();
+    }
 
-    // Disable updater loop
-    this._scheduleUpdater._disableLoop();
-  }
+    disable() {
+        this._nightLight.destroy();
+        this._nightLight = null;
+        this._scheduler.disableTimer();
+    }
 }
 
 function init() {
-  // eslint-disable-line
-  return new NightLightExtension();
+    return new Extension();
 }
