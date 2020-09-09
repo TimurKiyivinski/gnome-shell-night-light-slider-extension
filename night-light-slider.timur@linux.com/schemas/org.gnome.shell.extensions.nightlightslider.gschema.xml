@@ -3,37 +3,42 @@
         <key name="show-always" type="b">
             <default>false</default>
             <summary>Show always</summary>
-            <description>Show slider even when night light is off</description>
+            <description>Show the slider even when night light is disabled or off</description>
         </key>
         <key name="show-status-icon" type="b">
             <default>true</default>
-            <summary>Show status icon</summary>
-            <description>Show status icon in status area</description>
+            <summary>Show indicator</summary>
+            <description>Show the night light indicator in the status area</description>
         </key>
         <key name="enable-always" type="b">
             <default>false</default>
-            <summary>Enable always</summary>
-            <description>Enable night light throughout the day</description>
+            <summary>Enable permanent night light</summary>
+            <description>Constantly update the night light schedule such that it is enabled throughout the day</description>
         </key>
         <key name="minimum" type="i">
             <default>1500</default>
-            <summary>Minimum value</summary>
-            <description>Minimum night light slider value</description>
+            <summary>Lowest temperature</summary>
+            <description>Minimum slider value, lower is warmer</description>
         </key>
         <key name="maximum" type="i">
             <default>5000</default>
-            <summary>Maximum value</summary>
-            <description>Maximum night light slider value</description>
+            <summary>Highest temperature</summary>
+            <description>Maximum slider value, higher is cooler</description>
         </key>
         <key name="brightness-sync" type="b">
             <default>false</default>
-            <summary>Brightness sync</summary>
-            <description>Sync brightness slider with night light slider</description>
+            <summary>Sync brightness percentage</summary>
+            <description>Adjust both brightness and night light warmth</description>
         </key>
         <key name="show-in-submenu" type="b">
             <default>false</default>
             <summary>Show in submenu</summary>
-            <description>Display slider in night light submenu</description>
+            <description>Display the slider in the night light submenu instead of at the panel menu</description>
+        </key>
+        <key name="swap-axis" type="b">
+            <default>false</default>
+            <summary>Swap slider axis</summary>
+            <description>Invert the slider axis such that lower is cooler and higher is warmer</description>
         </key>
     </schema>
 </schemalist>
