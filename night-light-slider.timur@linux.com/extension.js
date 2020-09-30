@@ -294,6 +294,7 @@ class Extension {
     disable() {
         this._nightLight.destroy();
         this._nightLight = null;
+        panel.statusArea.aggregateMenu._nightLightSlider = null;
         this._scheduler.disableTimer();
     }
 }
