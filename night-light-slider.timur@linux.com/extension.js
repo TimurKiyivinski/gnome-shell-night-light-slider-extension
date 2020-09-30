@@ -111,6 +111,11 @@ class Indicator extends PanelMenu.SystemIndicator {
         this._indicatorScrollId = this._indicator.connect('scroll-event', (actor, event) => {
             return this._slider.emit('scroll-event', event);
         });
+
+        // Because SystemIndicator is a ClutterActor, overriding the destroy()
+        // method directly is bad idea. Instead PanelMenu.Button connects to
+        // the signal, so we can override that callback and chain-up.
+        this.connect('destroy', this._onDestroy.bind(this));
     }
 
     _sliderChanged() {
@@ -161,11 +166,21 @@ class Indicator extends PanelMenu.SystemIndicator {
         }
     }
 
-    destroy() {
+    _onDestroy() {
+        // Unassign DBus proxies
+        this._proxy.disconnect(this._proxyChangedId);
+        this._proxy = null;
+        this._brightnessProxy = null;
+
+        // Delete top-level items
+        this._item.destroy();
+        this._slider = null;
+        this._slider_icon = null;
+        this._item = null;
+
+        // Disconnect external signals
         this._indicator.disconnect(this._indicatorShowId);
         this._indicator.disconnect(this._indicatorScrollId);
-        this._item.destroy();
-        super.destroy();
     }
 });
 
