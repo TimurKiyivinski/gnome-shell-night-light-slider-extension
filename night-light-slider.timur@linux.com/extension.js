@@ -124,6 +124,13 @@ class Indicator extends PanelMenu.SystemIndicator {
             ? 1 - this._slider.value
             : this._slider.value;
         const temperature = percent * (maximum - minimum) + minimum;
+
+        // Block updates from ColorProxy over the 5s smear duration
+        this._proxy.block_signal_handler(this._proxyChangedId);
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 5000,
+            () => this._proxy.unblock_signal_handler(this._proxyChangedId));
+
+        // Update GSettings
         this._settings.set_uint('night-light-temperature', temperature);
 
         if (brightnessSync && this._brightnessProxy.Brightness >= 0)
