@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
     <schema id="org.gnome.shell.extensions.nightlightslider" path="/org/gnome/shell/extensions/nightlightslider/">
         <key name="show-always" type="b">
