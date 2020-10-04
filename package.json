@@ -2,10 +2,11 @@
   "name": "gnome-shell-night-light-slider-extension",
   "description": "Change night light temperature",
   "scripts": {
+    "build:resources": "glib-compile-resources --sourcedir night-light-slider.timur@linux.com/ night-light-slider.timur@linux.com/org.gnome.shell.extensions.nightlightslider.data.gresource.xml",
     "build:schema": "glib-compile-schemas night-light-slider.timur@linux.com/schemas/",
     "build:link": "ln -s $(pwd)/night-light-slider.timur@linux.com/ ~/.local/share/gnome-shell/extensions/",
     "build:zip": "cd night-light-slider.timur@linux.com/ && zip -r ../night-light-slider.timur@linux.com.zip ./*",
-    "build": "npm run build:schema && npm run build:zip"
+    "build": "npm run build:resources && npm run build:schema && npm run build:zip"
   },
   "repository": {
     "type": "git",
