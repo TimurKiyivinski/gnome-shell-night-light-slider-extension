@@ -3,7 +3,7 @@
   "description": "Change night light temperature",
   "scripts": {
     "build:schema": "glib-compile-schemas night-light-slider.timur@linux.com/schemas/",
-    "build:copy": "cp -rvf night-light-slider.timur@linux.com/ ~/.local/share/gnome-shell/extensions/",
+    "build:link": "ln -s $(pwd)/night-light-slider.timur@linux.com/ ~/.local/share/gnome-shell/extensions/",
     "build:zip": "cd night-light-slider.timur@linux.com/ && zip -r ../night-light-slider.timur@linux.com.zip ./*",
     "build": "npm run build:schema && npm run build:zip"
   },
