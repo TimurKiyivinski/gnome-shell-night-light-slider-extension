@@ -167,9 +167,8 @@ class Indicator extends PanelMenu.SystemIndicator {
         this._options[option] = value;
         switch (option) {
         case 'showAlways':
-            return this._sync();
         case 'showStatusIcon':
-            return this._updateIndicatorVisibility();
+            return this._sync();
         }
     }
 
