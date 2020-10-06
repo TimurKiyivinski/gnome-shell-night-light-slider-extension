@@ -1,241 +1,108 @@
-/* global imports log */
+/* exported buildPrefsWidget init */
+imports.gi.versions.Gtk = '3.0';
+imports.gi.versions.Handy = '0.0';
+const {GObject, Gio, Gtk, Handy} = imports.gi;
 
-const Gtk = imports.gi.Gtk;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
 
-// Extension specific
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
+// Register resources
+const resource = Me.metadata['data-gresource'];
+const resourceFile = Me.dir.get_child(resource);
+Gio.resources_register(Gio.Resource.load(resourceFile.get_path()));
 
-function buildPrefsWidget() {
-  // eslint-disable-line no-unused-vars
-  const schema = Convenience.getSettings();
+// GSettings schema
+const COLOR_SCHEMA = 'org.gnome.settings-daemon.plugins.color';
 
-  // Text and descriptions
-  const showAlwaysName = schema.settings_schema
-    .get_key("show-always")
-    .get_summary();
-  const showAlwaysDescription = schema.settings_schema
-    .get_key("show-always")
-    .get_description();
-  const showIconName = schema.settings_schema
-    .get_key("show-status-icon")
-    .get_summary();
-  const showIconDescription = schema.settings_schema
-    .get_key("show-status-icon")
-    .get_description();
-  const enableAlwaysName = schema.settings_schema
-    .get_key("enable-always")
-    .get_summary();
-  const enableAlwaysDescription = schema.settings_schema
-    .get_key("enable-always")
-    .get_description();
-  const minimumName = schema.settings_schema.get_key("minimum").get_summary();
-  const minimumDescription = schema.settings_schema
-    .get_key("minimum")
-    .get_description();
-  const maximumName = schema.settings_schema.get_key("maximum").get_summary();
-  const maximumDescription = schema.settings_schema
-    .get_key("maximum")
-    .get_description();
-  const brightnessSyncName = schema.settings_schema
-    .get_key("brightness-sync")
-    .get_summary();
-  const brightnessSyncDescription = schema.settings_schema
-    .get_key("brightness-sync")
-    .get_description();
-  const showInSubmenuName = schema.settings_schema
-    .get_key("show-in-submenu")
-    .get_summary();
-  const showInSubmenuDescription = schema.settings_schema
-    .get_key("show-in-submenu")
-    .get_description();
+var NightLightExtensionPrefs = GObject.registerClass({
+    GTypeName: 'NightLightExtensionPrefs',
+    Template: 'resource:///org/gnome/shell/extensions/nightlightslider/prefs.ui',
+    InternalChildren: [
+        /* Night Light status infobar */
+        'infobar_status', 'btn_enable_night_light',
+        /* Slider position option */
+        'show_in_submenu_combo',
+        /* Boolean switch options */
+        'show_always_toggle_switch',
+        'show_status_icon_toggle_switch',
+        'swap_axis_toggle_switch',
+        'brightness_sync_toggle_switch',
+        'enable_always_toggle_switch',
+        /* Temperature range */
+        'spinbutton_maximum', 'spinbutton_minimum',
+    ],
+}, class NightLightExtensionPrefs extends Gtk.Box {
+    _init(preferences) {
+        super._init();
+        this._preferences = preferences;
+        this._settings = new Gio.Settings({schema_id: COLOR_SCHEMA});
 
-  // Create children objects
-  const widgets = [
-    {
-      type: "Label",
-      params: { label: `${showAlwaysName}: ` },
-      tooltip: showAlwaysDescription,
-      align: Gtk.Align.END,
-      attach: [0, 1, 1, 1],
-    },
-    {
-      type: "Switch",
-      params: { active: schema.get_boolean("show-always") },
-      tooltip: showAlwaysDescription,
-      align: Gtk.Align.START,
-      attach: [1, 1, 1, 1],
-      connect: {
-        "state-set": (self) => {
-          schema.set_boolean("show-always", self.active);
-        },
-      },
-    },
-    {
-      type: "Label",
-      params: { label: `${showIconName}: ` },
-      tooltip: showAlwaysDescription,
-      align: Gtk.Align.END,
-      attach: [0, 2, 1, 1],
-    },
-    {
-      type: "Switch",
-      params: { active: schema.get_boolean("show-status-icon") },
-      tooltip: showIconDescription,
-      align: Gtk.Align.START,
-      attach: [1, 2, 1, 1],
-      connect: {
-        "state-set": (self) => {
-          schema.set_boolean("show-status-icon", self.active);
-        },
-      },
-    },
-    {
-      type: "Label",
-      params: { label: `${enableAlwaysName}: ` },
-      tooltip: enableAlwaysDescription,
-      align: Gtk.Align.END,
-      attach: [0, 3, 1, 1],
-    },
-    {
-      type: "Switch",
-      params: { active: schema.get_boolean("enable-always") },
-      tooltip: enableAlwaysDescription,
-      align: Gtk.Align.START,
-      attach: [1, 3, 1, 1],
-      connect: {
-        "state-set": (self) => {
-          schema.set_boolean("enable-always", self.active);
-        },
-      },
-    },
-    {
-      type: "Label",
-      params: { label: `${brightnessSyncName}: ` },
-      tooltip: brightnessSyncDescription,
-      align: Gtk.Align.END,
-      attach: [0, 4, 1, 1],
-    },
-    {
-      type: "Switch",
-      params: { active: schema.get_boolean("brightness-sync") },
-      tooltip: brightnessSyncDescription,
-      align: Gtk.Align.START,
-      attach: [1, 4, 1, 1],
-      connect: {
-        "state-set": (self) => {
-          schema.set_boolean("brightness-sync", self.active);
-        },
-      },
-    },
-    {
-      type: "Label",
-      params: { label: `${showInSubmenuName}: ` },
-      tooltip: showInSubmenuDescription,
-      align: Gtk.Align.END,
-      attach: [0, 5, 1, 1],
-    },
-    {
-      type: "Switch",
-      params: { active: schema.get_boolean("show-in-submenu") },
-      tooltip: showInSubmenuDescription,
-      align: Gtk.Align.START,
-      attach: [1, 5, 1, 1],
-      connect: {
-        "state-set": (self) => {
-          schema.set_boolean("show-in-submenu", self.active);
-        },
-      },
-    },
-    {
-      type: "Label",
-      params: { label: `${minimumName}: ` },
-      tooltip: minimumDescription,
-      align: Gtk.Align.END,
-      attach: [0, 6, 1, 1],
-    },
-    {
-      type: "Entry",
-      params: { text: schema.get_int("minimum").toString() },
-      tooltip: minimumDescription,
-      align: Gtk.Align.START,
-      attach: [1, 6, 1, 1],
-      connect: {
-        changed: (self) => {
-          schema.set_int("minimum", parseInt(self.text));
-        },
-      },
-    },
-    {
-      type: "Label",
-      params: { label: `${maximumName}: ` },
-      tooltip: maximumDescription,
-      align: Gtk.Align.END,
-      attach: [0, 7, 1, 1],
-    },
-    {
-      type: "Entry",
-      params: { text: schema.get_int("maximum").toString() },
-      tooltip: maximumDescription,
-      align: Gtk.Align.START,
-      attach: [1, 7, 1, 1],
-      connect: {
-        changed: (self) => {
-          schema.set_int("maximum", parseInt(self.text));
-        },
-      },
-    },
-    {
-      type: "Label",
-      params: {
-        label:
-          "Changes require restarting shell (logging in and out) to take place.",
-      },
-      tooltip: showAlwaysDescription,
-      align: Gtk.Align.CENTER,
-      attach: [0, 8, 2, 1],
-    },
-  ];
+        // Initialize application state
+        this._syncInfobar();
+        this._syncPreferences();
 
-  // Perform side-effects
-  const vbox = new Gtk.Grid({
-    column_spacing: 20,
-    row_spacing: 20,
-    margin: 10,
-  });
+        // Connect settings change signals
+        this._settings.connect('changed::night-light-enabled', this._syncInfobar.bind(this));
+        this._preferences.connect('changed', this._syncPreferences.bind(this));
 
-  widgets.map(function createWidget({
-    type,
-    params,
-    tooltip,
-    align,
-    attach,
-    connect,
-  }) {
-    const widget = new Gtk[type](params);
+        // Set up alert CTA to enable night light
+        this._btn_enable_night_light.connect('clicked',
+            () => this._settings.set_boolean('night-light-enabled', true));
 
-    // Set description
-    widget.set_tooltip_text(tooltip);
+        // Set up combo changed listener
+        this._show_in_submenu_combo.connect('changed',
+            self => this._preferences.set_boolean('show-in-submenu',
+                // The possible options are show_in_submenu_{true,false}
+                self.active_id === 'show_in_submenu_true'));
 
-    // Set alignment
-    widget.set_halign(align);
-    widget.set_hexpand(true);
+        // Set up switch state-set listeners
+        // We negate the returns of `set_boolean` such that the state updates
+        this._show_always_toggle_switch.connect('state-set',
+            (_, state) => !this._preferences.set_boolean('show-always', state));
+        this._show_status_icon_toggle_switch.connect('state-set',
+            (_, state) => !this._preferences.set_boolean('show-status-icon', state));
+        this._swap_axis_toggle_switch.connect('state-set',
+            (_, state) => !this._preferences.set_boolean('swap-axis', state));
+        this._brightness_sync_toggle_switch.connect('state-set',
+            (_, state) => !this._preferences.set_boolean('brightness-sync', state));
+        this._enable_always_toggle_switch.connect('state-set',
+            (_, state) => !this._preferences.set_boolean('enable-always', state));
 
-    // Add event handler if exists
-    if (connect) {
-      Object.keys(connect).map(function performConnect(signal) {
-        widget.connect(signal, () => connect[signal](widget));
-      });
+        // Set up spinner value-changed listeners
+        this._spinbutton_maximum.connect('value-changed',
+            self => this._preferences.set_int('maximum', self.value));
+        this._spinbutton_minimum.connect('value-changed',
+            self => this._preferences.set_int('minimum', self.value));
     }
 
-    vbox.attach(widget, ...attach);
-  });
+    _syncInfobar() {
+        const visible = !this._settings.get_boolean('night-light-enabled');
+        this._infobar_status.set_revealed(visible);
+    }
 
-  vbox.show_all();
-  return vbox;
+    _syncPreferences() {
+        // Focus on slider position option based on index
+        this._show_in_submenu_combo.set_active(this._preferences.get_boolean('show-in-submenu') ? 1 : 0);
+
+        // Update switch active states
+        this._show_always_toggle_switch.active = this._preferences.get_boolean('show-always');
+        this._show_status_icon_toggle_switch.active = this._preferences.get_boolean('show-status-icon');
+        this._swap_axis_toggle_switch.active = this._preferences.get_boolean('swap-axis');
+        this._brightness_sync_toggle_switch.active = this._preferences.get_boolean('brightness-sync');
+        this._enable_always_toggle_switch.active = this._preferences.get_boolean('enable-always');
+
+        // Update temperature range values
+        this._spinbutton_maximum.value = this._preferences.get_int('maximum');
+        this._spinbutton_minimum.value = this._preferences.get_int('minimum');
+    }
+});
+
+function buildPrefsWidget() {
+    const preferences = ExtensionUtils.getSettings();
+    return new NightLightExtensionPrefs(preferences);
 }
 
 function init() {
-  // eslint-disable-line
-  log("Setting up night light slider preferences");
+    Gtk.init(null);
+    Handy.init(null);
 }

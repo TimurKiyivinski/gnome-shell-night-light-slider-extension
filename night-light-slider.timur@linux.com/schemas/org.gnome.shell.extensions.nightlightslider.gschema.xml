@@ -1,8 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
     <schema id="org.gnome.shell.extensions.nightlightslider" path="/org/gnome/shell/extensions/nightlightslider/">
         <key name="show-always" type="b">
             <default>false</default>
-            <summary>Show always</summary>
+            <summary>Always show slider</summary>
             <description>Show the slider even when night light is disabled or off</description>
         </key>
         <key name="show-status-icon" type="b">
