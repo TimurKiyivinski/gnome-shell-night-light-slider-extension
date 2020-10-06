@@ -6,5 +6,5 @@
   "uuid": "night-light-slider.timur@linux.com",
   "version": 16,
   "url": "https://github.com/kiyui/gnome-shell-night-light-slider-extension",
-  "shell-version": ["3.36"]
+  "shell-version": ["3.36", "3.38"]
 }
