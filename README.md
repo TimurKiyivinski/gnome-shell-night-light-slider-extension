@@ -1,22 +1,26 @@
 # gnome-night-light-slider-extension
 
-Manage GNOME's built-in night light temperature intensity from the panel
+Manage GNOME's built-in night light temperature intensity from the aggregate menu!
 
 ![extension preview](./images/extension.gif)![extension in submenu](./images/show_in_submenu.gif)![extension with brightness sync](./images/brightness_sync.gif)
 
-## options
+- Click or scroll the slider to change the Night Light temperature
+- Scroll on the indicator to change the Night Light temperature
+- The preference panel even supports a quick toggle to enable Night Light if it's disabled!
 
-![extension options menu](./images/options.png)
+## preferences
 
-The extension has many configuration options, such as:
+![extension preferences](./images/preferences.gif)
 
-- Having the night slider show at all times, even when the night light is disabled
-- Disabling the status icon from showing
-- Having the extension enable night light throughout the day
-  - Enabling this will mess up your night light time settings because it periodically changes the night light schedule to keep it enabled all day
-- Letting the night light automatically sync with your screen brightness
-  - This feature only makes sense on some laptops
-- Toggling the extension to appear in the night light submenu instead
+The extension can be customized with the following preferences:
+
+- Change the slider position in the aggregate menu, either at the top-level or in the Night Light submenu
+- Always have the slider shown, even when the Night Light is disabled
+- Toggle the indicator visibility
+- Swap the axis of the slider
+- Sync Night Light slider percentage with brightness (albeit not vice-versa, works well on laptops with well tuned temperature ranges)
+- Enable permanent Night Light via having a timer constantly shift and update the Night Light schedule
+- Adjust minimum and maximum temperature values
 
 ## installation
 
