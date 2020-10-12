@@ -16,7 +16,7 @@ const COLOR_SCHEMA = 'org.gnome.settings-daemon.plugins.color';
 
 var NightLightExtensionPrefs = GObject.registerClass({
     GTypeName: 'NightLightExtensionPrefs',
-    Template: 'resource:///org/gnome/shell/extensions/nightlightslider/prefs.ui',
+    Template: 'resource:///org/gnome/shell/extensions/nightlightslider/ui/prefs.ui',
     InternalChildren: [
         /* Night Light status infobar */
         'infobar_status', 'btn_enable_night_light',
